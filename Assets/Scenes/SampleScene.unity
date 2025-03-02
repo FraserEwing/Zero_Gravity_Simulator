@@ -42318,7 +42318,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2291735172237534479, guid: 77e7c27b2c5525e4aa8cc9f99d654486, type: 3}
       propertyPath: m_SelectExited.m_PersistentCalls.m_Calls.Array.size
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2291735172237534479, guid: 77e7c27b2c5525e4aa8cc9f99d654486, type: 3}
       propertyPath: m_SelectEntered.m_PersistentCalls.m_Calls.Array.size
@@ -42554,6 +42554,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6653314208480319789, guid: 77e7c27b2c5525e4aa8cc9f99d654486, type: 3}
       propertyPath: m_EnableFreeYMovement
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6653314208480319789, guid: 77e7c27b2c5525e4aa8cc9f99d654486, type: 3}
+      propertyPath: m_EnableMoveWhileSelecting
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7219359282390074199, guid: 77e7c27b2c5525e4aa8cc9f99d654486, type: 3}
