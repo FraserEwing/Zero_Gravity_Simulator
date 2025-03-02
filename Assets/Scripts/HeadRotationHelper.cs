@@ -4,84 +4,73 @@ using UnityEngine;
 
 public class HeadRotationHelper : MonoBehaviour
 {
-    // Reference to the XR camera (VR headset)
-    public Transform vrCameraTransform;
+    public Transform xrOriginTransform;  // XR Origin Transform
+    public Transform vrCameraTransform;  // VR Camera (headset) Transform
 
-    // Thresholds for rotation (in degrees)
-    public float upThreshold = 90f; 
-    public float downThreshold = 270f;  
-    public float rightThreshold = 90f; 
-    public float leftThreshold = 270f; 
+    public float boundingBoxAngle = 45f; // Angle from centre to the edge of the bounding box
+    public float rotationStep = 30f;     // Degrees to rotate when head exits the box
+    public float holdTime = 1f;          // Time to hold head outside box before rotating again
+    public float rotationSpeed = 100f;   // Smooth rotation speed (degrees per second)
 
-    // Adjustment angle (in degrees)
-    public float adjustmentAngle = 45f;
+    private Vector3 centreDirection;     // Direction when the head is "centred"
+    private float timeOutsideBox = 0f;   // Time the user's head has stayed outside the bounding box
+    private float targetRotationY = 0f;  // Target Y rotation for smooth rotation
 
-    private Vector3 lastEulerAngles;
+    void Start()
+    {
+        if (!xrOriginTransform || !vrCameraTransform)
+        {
+            Debug.LogError("Please assign XR Origin and VR Camera in the Inspector!");
+            return;
+        }
 
-    // Update is called once per frame
+        // Initialize centre direction relative to xrOriginTransform's forward
+        centreDirection = new Vector3(xrOriginTransform.forward.x, 0, xrOriginTransform.forward.z).normalized;
+        targetRotationY = xrOriginTransform.eulerAngles.y;
+    }
+
     void Update()
     {
-        if (lastEulerAngles == Vector3.zero){
-            lastEulerAngles = vrCameraTransform.eulerAngles;
-        }
-        AdjustHeadsetRotation();
+        HandleBoundingBoxRotation();
+        SmoothRotateOrigin();
     }
 
-    private void AdjustHeadsetRotation()
+    private void HandleBoundingBoxRotation()
     {
-        // Get the current rotation of the VR camera (headset)
-        Vector3 currentEulerAngles = vrCameraTransform.eulerAngles;
+        // Get the camera's forward direction relative to the XR Origin
+        Vector3 localForward = xrOriginTransform.InverseTransformDirection(vrCameraTransform.forward);
+        Vector3 currentDirection = new Vector3(localForward.x, 0, localForward.z).normalized;
 
-        // Ensure we're dealing with the shortest angle (account for angle wrapping)
-        currentEulerAngles.x = NormalizeAngle(currentEulerAngles.x);
-        currentEulerAngles.y = NormalizeAngle(currentEulerAngles.y);
-        
-        // Handle vertical rotation (up/down)
-        if (currentEulerAngles.y > upThreshold && currentEulerAngles.y < downThreshold && currentEulerAngles.y - lastEulerAngles.y > 0)
+        // Compute the angle between the centre direction and the current gaze direction
+        float angleFromCentre = Vector3.SignedAngle(centreDirection, currentDirection, Vector3.up);
+
+        // Check if the angle is outside the bounding box
+        if (Mathf.Abs(angleFromCentre) > boundingBoxAngle)
         {
-            // If looking up, adjust upward
-            vrCameraTransform.Rotate(Vector3.up * adjustmentAngle);
-            upThreshold += adjustmentAngle; // Increase the vertical threshold when looking up
-            downThreshold -= adjustmentAngle; // Decrease the vertical threshold when looking down
-        }
+            timeOutsideBox += Time.deltaTime;
 
-        if (currentEulerAngles.y < upThreshold && currentEulerAngles.y > downThreshold && currentEulerAngles.y - lastEulerAngles.y < 0)
+            // If the user has stayed outside the box for the required hold time, queue a rotation
+            if (timeOutsideBox >= holdTime)
+            {
+                float rotationDirection = angleFromCentre > 0 ? 1f : -1f;
+                targetRotationY += rotationStep * rotationDirection;
+
+                // Reset timer
+                timeOutsideBox = 0f;
+            }
+        }
+        else
         {
-            // If looking down, adjust downward
-            vrCameraTransform.Rotate(Vector3.down * adjustmentAngle);
-            upThreshold -= adjustmentAngle; // Decrease the vertical threshold when looking up
-            downThreshold += adjustmentAngle; // Increase the vertical threshold when looking down
+            // Reset timer when the gaze is inside the bounding box
+            timeOutsideBox = 0f;
         }
-
-        // Handle horizontal rotation (left/right)
-        if (currentEulerAngles.x > rightThreshold && currentEulerAngles.x < leftThreshold && currentEulerAngles.x - lastEulerAngles.x > 0)
-        {
-            // If looking right, adjust rightward
-            vrCameraTransform.Rotate(Vector3.right * adjustmentAngle);
-            rightThreshold += adjustmentAngle; // Increase the right threshold when looking right
-            leftThreshold -= adjustmentAngle; // Decrease the left threshold when looking right
-        }
-
-        if (currentEulerAngles.x < rightThreshold && currentEulerAngles.x > leftThreshold && currentEulerAngles.x - lastEulerAngles.x < 0)
-        {
-            // If looking left, adjust leftward
-            vrCameraTransform.Rotate(Vector3.left * adjustmentAngle);
-            rightThreshold -= adjustmentAngle; // Decrease the right threshold when looking left
-            leftThreshold += adjustmentAngle; // Increase the left threshold when looking left
-        }
-
-        // Update the lastEulerAngles for the next frame
-        lastEulerAngles = currentEulerAngles;
     }
 
-    // Normalize the angle to ensure it's between 0 and 360 degrees
-    private float NormalizeAngle(float angle)
+    private void SmoothRotateOrigin()
     {
-        if (angle < 0) 
-        {
-            angle += 360f;
-        }
-        return angle % 360f;
+        // Smoothly rotate towards the target rotation
+        float currentY = xrOriginTransform.eulerAngles.y;
+        float newY = Mathf.MoveTowardsAngle(currentY, targetRotationY, rotationSpeed * Time.deltaTime);
+        xrOriginTransform.eulerAngles = new Vector3(0, newY, 0);
     }
 }
-
