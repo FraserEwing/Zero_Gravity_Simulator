@@ -6,7 +6,8 @@ using UnityEngine;
 public class ZeroGravityRotation : MonoBehaviour
 {
     public Transform userTransform; // Reference to the user (XR Origin)
-    public float rotationSpeed = 100f; // Adjusts rotation sensitivity
+    public float rotationSpeed = 10000f; // Adjusts rotation sensitivity
+    public CharacterController characterController; // Reference to the character controller
     private UnityEngine.XR.Interaction.Toolkit.Interactors.XRBaseInteractor activeInteractor; // Tracks the grabbing hand (left hand)
     private Vector3 lastHandPosition; // Stores last hand position
     private bool isRotating = false; // Whether rotation is active
@@ -21,8 +22,11 @@ public class ZeroGravityRotation : MonoBehaviour
             // Determine axis of rotation (perpendicular to hand movement)
             Vector3 rotationAxis = Vector3.Cross(handMovement, userTransform.up).normalized;
 
-            // Rotate the ISS model around the user based on hand movement
-            transform.RotateAround(userTransform.position, rotationAxis, handMovement.magnitude * rotationSpeed * Time.deltaTime);
+            // Get the centre of the character controller in world space
+            Vector3 characterCentre = characterController.transform.position + characterController.center;
+
+            // Rotate the ISS model around the character controller centre
+            transform.RotateAround(characterCentre, rotationAxis, handMovement.magnitude * rotationSpeed * Time.deltaTime);
 
             lastHandPosition = handPosition; // Update last position
         }
