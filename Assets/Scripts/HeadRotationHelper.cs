@@ -11,6 +11,7 @@ public class HeadRotationHelper : MonoBehaviour
     public float rotationStep = 30f;     // Degrees to rotate when head exits the box
     public float holdTime = 1f;          // Time to hold head outside box before rotating again
     public float rotationSpeed = 100f;   // Smooth rotation speed (degrees per second)
+    public bool useSmoothRotation = true; // Toggle smooth rotation on/off
 
     private Vector3 centreDirection;     // Direction when the head is "centred"
     private float timeOutsideBox = 0f;   // Time the user's head has stayed outside the bounding box
@@ -32,7 +33,14 @@ public class HeadRotationHelper : MonoBehaviour
     void Update()
     {
         HandleBoundingBoxRotation();
-        SmoothRotateOrigin();
+        if (useSmoothRotation)
+        {
+            SmoothRotateOrigin();
+        }
+        else
+        {
+            xrOriginTransform.eulerAngles = new Vector3(0, targetRotationY, 0);
+        }
     }
 
     private void HandleBoundingBoxRotation()
