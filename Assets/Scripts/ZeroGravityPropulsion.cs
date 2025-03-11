@@ -60,5 +60,11 @@ public class ZeroGravityPropulsion : MonoBehaviour
         Vector3 inverseVelocityDirection = -velocity.normalized; // Get the inverse of the velocity direction
         currentVelocity += inverseVelocityDirection * velocity.magnitude * propulsionForceMultiplier;
     }
+
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        // Stop movement when a collision is detected
+        currentVelocity = Vector3.zero;
+    }
 }
 
